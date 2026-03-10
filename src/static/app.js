@@ -54,38 +54,74 @@ document.addEventListener("DOMContentLoaded", () => {
         activityCard.className = "activity-card";
 
         const spotsLeft = details.max_participants - details.participants.length;
-        const hasParticipants = details.participants.length > 0;
-        const participantsList = hasParticipants
-          ? details.participants
-              .map(
-                (participant) => `
-                  <li class="participant-item">
-                    <span>${participant}</span>
-                    <button
-                      type="button"
-                      class="delete-participant-btn"
-                      data-activity="${name}"
-                      data-email="${participant}"
-                      aria-label="Unregister ${participant} from ${name}"
-                      title="Unregister participant"
-                    >
-                      🗑
-                    </button>
-                  </li>`
-              )
-              .join("")
-          : '<li class="empty-participants">No participants yet</li>';
 
-        activityCard.innerHTML = `
-          <h4>${name}</h4>
-          <p>${details.description}</p>
-          <p><strong>Schedule:</strong> ${details.schedule}</p>
-          <p><strong>Availability:</strong> ${spotsLeft} spots left</p>
-          <div class="participants-section">
-            <p class="participants-title"><strong>Participants</strong></p>
-            <ul class="participants-list">${participantsList}</ul>
-          </div>
-        `;
+        const heading = document.createElement("h4");
+        heading.textContent = name;
+
+        const descP = document.createElement("p");
+        descP.textContent = details.description;
+
+        const scheduleP = document.createElement("p");
+        const scheduleStrong = document.createElement("strong");
+        scheduleStrong.textContent = "Schedule:";
+        scheduleP.appendChild(scheduleStrong);
+        scheduleP.appendChild(document.createTextNode(` ${details.schedule}`));
+
+        const availP = document.createElement("p");
+        const availStrong = document.createElement("strong");
+        availStrong.textContent = "Availability:";
+        availP.appendChild(availStrong);
+        availP.appendChild(document.createTextNode(` ${spotsLeft} spots left`));
+
+        const participantsSection = document.createElement("div");
+        participantsSection.className = "participants-section";
+
+        const participantsTitle = document.createElement("p");
+        participantsTitle.className = "participants-title";
+        const titleStrong = document.createElement("strong");
+        titleStrong.textContent = "Participants";
+        participantsTitle.appendChild(titleStrong);
+
+        const participantsUl = document.createElement("ul");
+        participantsUl.className = "participants-list";
+
+        if (details.participants.length > 0) {
+          details.participants.forEach((participant) => {
+            const li = document.createElement("li");
+            li.className = "participant-item";
+
+            const span = document.createElement("span");
+            span.textContent = participant;
+
+            const button = document.createElement("button");
+            button.type = "button";
+            button.className = "delete-participant-btn";
+            button.setAttribute("aria-label", `Unregister ${participant} from ${name}`);
+            button.title = "Unregister participant";
+            button.textContent = "🗑";
+            button.addEventListener("click", () => {
+              unregisterParticipant(name, participant);
+            });
+
+            li.appendChild(span);
+            li.appendChild(button);
+            participantsUl.appendChild(li);
+          });
+        } else {
+          const emptyLi = document.createElement("li");
+          emptyLi.className = "empty-participants";
+          emptyLi.textContent = "No participants yet";
+          participantsUl.appendChild(emptyLi);
+        }
+
+        participantsSection.appendChild(participantsTitle);
+        participantsSection.appendChild(participantsUl);
+
+        activityCard.appendChild(heading);
+        activityCard.appendChild(descP);
+        activityCard.appendChild(scheduleP);
+        activityCard.appendChild(availP);
+        activityCard.appendChild(participantsSection);
 
         activitiesList.appendChild(activityCard);
 
@@ -94,12 +130,6 @@ document.addEventListener("DOMContentLoaded", () => {
         option.value = name;
         option.textContent = name;
         activitySelect.appendChild(option);
-      });
-
-      activitiesList.querySelectorAll(".delete-participant-btn").forEach((button) => {
-        button.addEventListener("click", () => {
-          unregisterParticipant(button.dataset.activity, button.dataset.email);
-        });
       });
     } catch (error) {
       activitiesList.innerHTML = "<p>Failed to load activities. Please try again later.</p>";
